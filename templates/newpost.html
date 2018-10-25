@@ -15,13 +15,17 @@
 
     <form method='post'>
         <p>Title for your new blog:</p>
-        <input type="text" name='blog' />
+        <input type="text" name='blog' value="{{ request.form['blog'] }}"/>
         <span class="error">{{title_error}}</span>
+
         <br><br>
+
         <p>Your new Blog:</p>
-        <textarea name="body"></textarea>
+        <textarea name="body">{{ request.form['body'] }}</textarea>
         <span class="error">{{body_error}}</span>
+
         <br><br>
+
         <input type="submit" value='Add Entry' />
         
     </form>

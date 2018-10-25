@@ -1,39 +1,66 @@
-from flask import flask, request ,redirect,render_template
-from flask_sqlalchemy import flask_sqlalchemy
+from flask import Flask, request, redirect, render_template
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['DEBUG'] =True
-#Configuration that connect us to the database[Connection String]
-app.config['SQLALCHEMY_DATABASE_URL'] = 'mysql+pymsql://build-a-blog:kibreabkidane@localhost:8889/build-a-blog'
-app.config['SQLALCHEMY_ECHO']=True
-
-#Creat a tie that binds all togehter and helps the variable to run in the database 
+app.config['DEBUG'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://build-a-blog:kibreabkidane@localhost:8889/build-a-blog'
+app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
-#Before we start testing we have to store some data to our database and the use we do that is by creating a persistance Class.
-#Class that can be stored in the database and the class should extend the db.Model I am allowing my task to be related to the database using the Sql Alchemy
-
-class Task(db.Model):
-# We need to specify two things [id (primary key) and ]
-    id = db.Column(db.Integer,primary_key=True)
-    name = db.Column(db.String(120))
-
-#Provide a Constractor should take the unique which is name
-    def __init__(self, name):
-       self.name = name 
 
 
-tasks = []
+class Blog(db.Model):
 
-@app.route('/', methods=['POST', 'GET'])
-def index():
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120))
+    body = db.Column(db.String(120))
 
+    def __init__(self, title,body):
+        self.title = title
+        self.body = body
+
+@app.route('/newpost', methods=['POST', 'GET'])
+def newpost():
 
     if request.method == 'POST':
-        task = request.form['task']
-        task.append(task)
-    return render_template('todos.html',title="build a blog!", tasks=tasks)
-# If we want to sheild the app command in python we have to use the following 
+        title = request.form['blog']
+        body = request.form['body']
+        title_error = ''
+        body_error = ''
+        #Validation and
+        
+        if len(title) == 0 and len(body) == 0:
+            title_error = 'Invalid Title'
+            body_error = 'Blog body can not be empty'
+            return render_template('newpost.html',title_error=title_error,body_error=body_error)
+        elif len(title) == 0 and len(body) != 0:
+            title_error = 'Invalid Title'
+            return render_template('newpost.html',title_error=title_error)
+        elif len(body) == 0 and len(title) != 0:
+            body_error = 'Blog body can not be empty'
+            return render_template('newpost.html',body_error=body_error)
+        #If valid input, it stores into database and displays individual blog!    
+        else:
+            new_blog = Blog(title,body)
+            db.session.add(new_blog)
+            db.session.commit()
+            return render_template('des_blog.html',title="Build a Blog!", 
+            blog=new_blog)
+                    
+    return render_template('newpost.html')
+  
+
+@app.route('/blog', methods=['POST', 'GET'])
+def blog():
+
+    if (request.args.get('id')):
+        x = int(request.args.get('id'))
+        blog = Blog.query.get(x)
+        return render_template('des_blog.html', blog=blog)
+    else:
+        blogs = Blog.query.all()
+        return render_template('blog.html',blogs=blogs)
+    
+
 
 if __name__ == '__main__':
-
     app.run()
